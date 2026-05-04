@@ -929,6 +929,21 @@ static int cmd_shell (void)
 		}
 		if (!strcmp (line_up, "DISCONNECT"))
 		{
+			int *slot = !strcmp (profile, "VOLATCO-B") || !strcmp (profile, "B") ? &fd_b : &fd_a;
+			if (*slot >= 0)
+			{
+				close (*slot);
+				*slot = -1;
+				printf ("persistent connection closed for profile %s\n", profile);
+			}
+			else
+			{
+				printf ("profile %s already disconnected\n", profile);
+			}
+			continue;
+		}
+		if (!strcmp (line_up, "DISCONNECT ALL"))
+		{
 			if (fd_a >= 0) { close (fd_a); fd_a = -1; }
 			if (fd_b >= 0) { close (fd_b); fd_b = -1; }
 			printf ("all persistent connections closed\n");
