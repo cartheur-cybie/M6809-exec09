@@ -51,6 +51,8 @@ void serial_reset (struct hw_device *dev);
 extern U8 null_read (struct hw_device *dev, unsigned long addr);
 struct hw_device* serial_create (void);
 struct hw_device* hostfile_create (const char *filename, int flags);
+void serial_set_host_device (const char *path);
+void serial_set_host_baud (int baud);
 int serial_inject_byte (U8 val);
 int serial_inject_bytes (const U8 *vals, unsigned int count);
 int serial_get_rx_pending (void);

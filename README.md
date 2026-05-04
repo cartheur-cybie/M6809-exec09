@@ -75,6 +75,11 @@ There are five built-in machine types at present:
 ### Command-line options
 
 * Use `-help` to see the command-line options.
+* `--serial-device=/dev/ttyUSB0` binds the emulator serial device to a host serial port.
+* `--serial-baud=38400` sets baud for `--serial-device` (supported: 1200, 2400, 4800, 9600, 19200, 38400, 57600, 115200).
+
+Example (EON2 machine serial connected to Cybie USB serial adapter):
+`./src/m6809-run -s eon2 --serial-device=/dev/ttyUSB0 --serial-baud=38400 <program.srec>`
 
 ### Debugging
 

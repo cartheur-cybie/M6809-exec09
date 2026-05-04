@@ -28,6 +28,7 @@
 #include "symtab.h"
 #include "machine.h"
 #include "monitor.h"
+#include "serial.h"
 
 /* The total number of cycles that have executed */
 unsigned long total = 0;
@@ -73,6 +74,8 @@ char *exename;
 const char *machine_name = "simple";
 
 const char *prog_name = NULL;
+const char *serial_device_path = NULL;
+int serial_device_baud = 38400;
 
 FILE *stat_file = NULL;
 
@@ -200,6 +203,10 @@ struct option
 		NO_NEG, HAS_ARG, &max_cycles, 0, NULL, NULL },
 	{ 's', "machine", "Specify the machine (exact hardware) to emulate",
 		NO_NEG, HAS_ARG, NULL, 0, &machine_name, NULL },
+	{ '-', "serial-device", "Host serial path for emulated serial port (e.g. /dev/ttyUSB0)",
+		NO_NEG, HAS_ARG, NULL, 0, &serial_device_path, NULL },
+	{ '-', "serial-baud", "Baud for --serial-device (e.g. 38400 or 9600)",
+		NO_NEG, HAS_ARG, &serial_device_baud, 0, NULL, NULL },
 	{ 'p', "persistent", "Use persistent machine state",
 		NO_NEG, NO_ARG, &machine_persistent, 1, NULL, NULL },
 	{ '\0', NULL },
@@ -371,6 +378,11 @@ main (int argc, char *argv[])
   based on the executable name. */
 
 	parse_args (argc, argv);
+	if (serial_device_path)
+	{
+		serial_set_host_device (serial_device_path);
+		serial_set_host_baud (serial_device_baud);
+	}
 
 	sym_init ();
 

@@ -26,6 +26,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <assert.h>
+#include <termios.h>
 #include "machine.h"
 #include "serial.h"
 
@@ -33,6 +34,48 @@
 input/output interface. */
 static struct serial_port *default_port = NULL;
 static int tx_trace_enabled = 0;
+static const char *serial_host_device = NULL;
+static int serial_host_baud = 38400;
+
+static speed_t serial_speed_from_baud (int baud)
+{
+	switch (baud)
+	{
+		case 1200: return B1200;
+		case 2400: return B2400;
+		case 4800: return B4800;
+		case 9600: return B9600;
+		case 19200: return B19200;
+		case 38400: return B38400;
+#ifdef B57600
+		case 57600: return B57600;
+#endif
+#ifdef B115200
+		case 115200: return B115200;
+#endif
+		default: return (speed_t)0;
+	}
+}
+
+static int serial_setup_tty (int fd, int baud)
+{
+	struct termios tio;
+	speed_t speed = serial_speed_from_baud (baud);
+	if (speed == 0)
+		return -1;
+	if (tcgetattr (fd, &tio) != 0)
+		return -1;
+	cfmakeraw (&tio);
+	tio.c_cflag |= CLOCAL | CREAD;
+	tio.c_cflag &= ~CRTSCTS;
+	if (cfsetispeed (&tio, speed) != 0)
+		return -1;
+	if (cfsetospeed (&tio, speed) != 0)
+		return -1;
+	if (tcsetattr (fd, TCSANOW, &tio) != 0)
+		return -1;
+	return 0;
+}
 
 static int serial_queue_push (struct serial_port *port, U8 val)
 {
@@ -152,8 +195,31 @@ extern U8 null_read (struct hw_device *dev, unsigned long addr);
 struct hw_device* serial_create (void)
 {
 	struct serial_port *port = malloc (sizeof (struct serial_port));
-	port->fin = STDIN_FILENO;
-	port->fout = STDOUT_FILENO;
+	if (serial_host_device)
+	{
+		int fd = open (serial_host_device, O_RDWR | O_NOCTTY);
+		if (fd >= 0 && serial_setup_tty (fd, serial_host_baud) == 0)
+		{
+			port->fin = fd;
+			port->fout = fd;
+			fprintf (stderr, "serial: connected to %s at %d baud\n",
+				serial_host_device, serial_host_baud);
+		}
+		else
+		{
+			if (fd >= 0)
+				close (fd);
+			fprintf (stderr, "serial: failed to open/configure %s at %d baud; using stdio\n",
+				serial_host_device, serial_host_baud);
+			port->fin = STDIN_FILENO;
+			port->fout = STDOUT_FILENO;
+		}
+	}
+	else
+	{
+		port->fin = STDIN_FILENO;
+		port->fout = STDOUT_FILENO;
+	}
 	port->rx_rd = 0;
 	port->rx_wr = 0;
 	port->rx_count = 0;
@@ -205,4 +271,17 @@ void serial_set_tx_trace (int enabled)
 int serial_get_tx_trace (void)
 {
 	return tx_trace_enabled;
+}
+
+void serial_set_host_device (const char *path)
+{
+	serial_host_device = path;
+}
+
+void serial_set_host_baud (int baud)
+{
+	if (serial_speed_from_baud (baud) != 0)
+		serial_host_baud = baud;
+	else
+		fprintf (stderr, "serial: unsupported baud %d, keeping %d\n", baud, serial_host_baud);
 }
