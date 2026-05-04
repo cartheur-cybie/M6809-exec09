@@ -4,6 +4,7 @@
 #include "monitor.h"
 #include "machine.h"
 #include "symtab.h"
+#include "serial.h"
 #include <sys/errno.h>
 #include <unistd.h>
 #include <ctype.h>
@@ -1045,7 +1046,12 @@ void cmd_display (void)
    while ((arg = getarg ()) != NULL)
    {
       display_t *ds = display_alloc ();
-      strcpy (ds->expr, arg);
+      if (!ds)
+      {
+         fprintf (stderr, "error: no more display slots available\n");
+         break;
+      }
+      snprintf (ds->expr, sizeof (ds->expr), "%s", arg);
       ds->type = print_type;
       parse_format_flag (command_flags, &ds->type.format);
       parse_size_flag (command_flags, &ds->type.size);
@@ -1241,6 +1247,72 @@ void cmd_info (void)
    describe_machine();
 }
 
+void cmd_serial_rx (void)
+{
+   char *arg;
+   unsigned int count = 0;
+   unsigned long val;
+   char *end;
+
+   while ((arg = getarg ()) != NULL)
+   {
+      val = strtoul (arg, &end, 0);
+      if (*end || (val > 0xFF))
+      {
+         fprintf (stderr, "error: bad byte '%s' (expected 0..255)\n", arg);
+         return;
+      }
+      if (serial_inject_byte ((U8)val) != 0)
+      {
+         fprintf (stderr, "error: serial RX queue full or no serial device\n");
+         return;
+      }
+      count++;
+   }
+
+   if (count == 0)
+   {
+      fprintf (stderr, "usage: serrx <byte> [byte...]\n");
+      return;
+   }
+
+   printf ("Injected %u byte(s), pending RX=%d\n", count, serial_get_rx_pending ());
+}
+
+void cmd_serial_stat (void)
+{
+   int pending = serial_get_rx_pending ();
+   if (pending < 0)
+   {
+      printf ("No active serial device\n");
+      return;
+   }
+   printf ("Serial RX pending: %d, TX trace: %s\n",
+           pending, serial_get_tx_trace () ? "on" : "off");
+}
+
+void cmd_serial_tx_trace (void)
+{
+   char *arg = getarg ();
+   if (!arg)
+   {
+      printf ("TX trace is %s\n", serial_get_tx_trace () ? "on" : "off");
+      return;
+   }
+
+   if (!strcmp (arg, "1") || !strcmp (arg, "on"))
+      serial_set_tx_trace (1);
+   else if (!strcmp (arg, "0") || !strcmp (arg, "off"))
+      serial_set_tx_trace (0);
+   else
+   {
+      fprintf (stderr, "usage: sertx [on|off|1|0]\n");
+      return;
+   }
+
+   printf ("TX trace is %s\n", serial_get_tx_trace () ? "on" : "off");
+}
+
 /****************** Parser ************************/
 
 void cmd_help (void);
@@ -1311,6 +1383,12 @@ struct command_name
      "Describe machine, devices and address mapping" },
    { "pc", "pc", cmd_pc,
      "Set program counter" },
+   { "serrx", "serrx", cmd_serial_rx,
+     "Inject bytes into emulated serial RX queue" },
+   { "serstat", "serstat", cmd_serial_stat,
+     "Show serial communicator status" },
+   { "sertx", "sertx", cmd_serial_tx_trace,
+     "Set/get serial TX tracing (on/off)" },
 #if 0
    { "cl", "clear", cmd_clear },
    { "co", "condition", cmd_condition },

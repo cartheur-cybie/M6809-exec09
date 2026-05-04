@@ -15,8 +15,7 @@ The optional package `libreadline-dev` is very handy for debugging development p
 While in a terminal at the root directory of this project, generate the configure for your system and generate buildable sources:
 
 ```
-autoconf -o configure
-autoreconf --install
+autoreconf -fi
 ```
 
 ### Makefile tools
@@ -225,6 +224,19 @@ td
 
 vars
 	Show all program variables.
+
+serrx <byte> [byte...]
+	Inject one or more bytes into the emulated serial RX queue.
+	Useful for monitor-driven protocol testing (for example, iCybie
+	serial command streams). Byte values may be decimal or hex:
+	serrx 0x55 0xAA 3 4
+
+serstat
+	Show serial monitor state (pending RX bytes and TX trace mode).
+
+sertx [on|off|1|0]
+	Enable or disable monitor-side logging of serial TX bytes.
+	With no argument, reports current state.
 
 x [format] <expr>
 	Examine target memory at the address  <expr>. Eg:

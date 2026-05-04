@@ -29,6 +29,10 @@ struct serial_port
 	unsigned int status;
 	int fin;
 	int fout;
+	unsigned int rx_rd;
+	unsigned int rx_wr;
+	unsigned int rx_count;
+	unsigned char rx_buf[4096];
 };
 
 /* The I/O registers exposed by this driver */
@@ -47,5 +51,10 @@ void serial_reset (struct hw_device *dev);
 extern U8 null_read (struct hw_device *dev, unsigned long addr);
 struct hw_device* serial_create (void);
 struct hw_device* hostfile_create (const char *filename, int flags);
+int serial_inject_byte (U8 val);
+int serial_inject_bytes (const U8 *vals, unsigned int count);
+int serial_get_rx_pending (void);
+void serial_set_tx_trace (int enabled);
+int serial_get_tx_trace (void);
 
 #endif
