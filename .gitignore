@@ -28,3 +28,6 @@ Makefile.in
 # Result of autoreconf --install
 
 COPYING
+config.guess
+config.sub
+src/Makefile
