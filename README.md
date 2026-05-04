@@ -82,6 +82,14 @@ For command presets and examples, see:
 
 - [CYBIE_COMMANDS.md](CYBIE_COMMANDS.md)
 
+For direct host serial diagnostics/loopback outside the emulator:
+
+```bash
+./src/exec09-monitor ports
+./src/exec09-monitor diag
+./src/exec09-monitor loopback /dev/ttyUSB0
+```
+
 ## Debugger Commands (Core Set)
 
 At the `(dbg)` prompt, commonly used commands are:

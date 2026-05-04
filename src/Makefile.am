@@ -1,4 +1,4 @@
-bin_PROGRAMS = m6809-run
+bin_PROGRAMS = m6809-run exec09-monitor
 bin_SCRIPTS = wpc-run
 
 m6809_run_SOURCES = \
@@ -9,3 +9,6 @@ m6809_run_SOURCES = \
 	command.h symtab.h imux.h ioexpand.h mmu.h timer.h serial.h
 
 m6809_run_LDADD = $(READLINE_LIBS)
+
+exec09_monitor_SOURCES = \
+	hostmon_main.c hostmon.c hostmon.h

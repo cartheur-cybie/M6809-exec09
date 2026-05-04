@@ -45,3 +45,23 @@ sertx on
 - If the serial device cannot be opened/configured, the emulator falls back to stdin/stdout.
 - Supported baud rates: `1200, 2400, 4800, 9600, 19200, 38400, 57600, 115200`.
 - Linux serial devices are commonly `/dev/ttyUSB0` or `/dev/ttyACM0`.
+
+
+## Host Monitor (C)
+
+Use the native C host monitor utility:
+
+```bash
+./src/exec09-monitor ports
+./src/exec09-monitor diag
+./src/exec09-monitor connect /dev/ttyUSB0 --baud 921600
+./src/exec09-monitor loopback /dev/ttyUSB0
+./src/exec09-monitor transceive /dev/ttyUSB0 00 16 --wait-ms 80
+```
+
+Short wrappers:
+
+```bash
+./scripts/monitor.sh ports
+./scripts/monitor-easy.sh
+```
